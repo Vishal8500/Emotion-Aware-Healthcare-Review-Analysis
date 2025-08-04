@@ -3,6 +3,7 @@ data/
 
 # Ignore generated CSV files
 medical_reviews.csv
+*.csv
 
 # Ignore Python virtual environment
 .venv/

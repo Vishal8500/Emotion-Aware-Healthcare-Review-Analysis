@@ -62,19 +62,44 @@ plt.savefig("3_heatmap_emotion_sentiment.png")
 plt.show()
 
 # ===============================
-# 🔁 4. Rating Change Distribution
+# 🕸️ 4. Radar Chart: Rating Change Distribution (Mismatched Only)
 # ===============================
-df['rating_change'] = df['adjusted_rating'] - df['stars']
-df['rating_change_status'] = df['rating_change'].apply(lambda x: 'Increased' if x > 0 else 'Decreased' if x < 0 else 'Same')
+from math import pi
 
-plt.figure()
-sns.countplot(x='rating_change_status', data=df[df['sentiment_mismatch']], palette="Set2")
-plt.title("🔁 Rating Change Summary (Mismatched Only)")
-plt.xlabel("Change Type")
-plt.ylabel("Number of Reviews")
+# Compute rating change columns (if not already present)
+if 'rating_change_status' not in df.columns:
+    df['rating_change'] = df['adjusted_rating'] - df['stars']
+    df['rating_change_status'] = df['rating_change'].apply(
+        lambda x: 'Increased' if x > 0 else 'Decreased' if x < 0 else 'Same'
+    )
+
+# Prepare data
+mismatch_subset = df[df['sentiment_mismatch']]
+radar_data = mismatch_subset['rating_change_status'].value_counts().reset_index()
+radar_data.columns = ['Change Type', 'Count']
+
+# Ensure consistent order (so the radar always looks the same)
+categories = ['Increased', 'Decreased', 'Same']
+radar_data = radar_data.set_index('Change Type').reindex(categories).fillna(0).reset_index()
+
+# Radar setup
+N = len(categories)
+values = radar_data['Count'].values.tolist()
+values += values[:1]  # repeat first value to close circle
+angles = [n / float(N) * 2 * pi for n in range(N)]
+angles += angles[:1]
+
+# Plot radar
+plt.figure(figsize=(7, 7))
+ax = plt.subplot(111, polar=True)
+plt.xticks(angles[:-1], categories, color='black', size=12)
+ax.plot(angles, values, linewidth=2, linestyle='solid', color='teal')
+ax.fill(angles, values, color='teal', alpha=0.25)
+plt.title("🕸️ Rating Change Distribution (Mismatched Only)", size=15, y=1.08)
 plt.tight_layout()
-plt.savefig("4_rating_change_summary.png")
+plt.savefig("4_rating_change_radar.png", bbox_inches='tight')
 plt.show()
+
 
 # ===============================
 # ⚖️ 5. Scatter Plot: Original vs Adjusted Ratings
